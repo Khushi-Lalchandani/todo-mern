@@ -1,8 +1,31 @@
 import './index.css'
 import TodoForm from './components/TodoForm'
 import TodoList from './components/TodoList'
-
+import { useState, useEffect } from 'react'
+import API from './api.js'
+export interface Todo {
+  _id: string
+  title: string
+  completed: boolean
+  createdAt: string
+  updatedAt: string
+}
 function App() {
+
+
+  const [todos, setTodos] = useState<Todo[]>([])
+  const fetchTodos = async () => {
+    try {
+      const response = await API.get("/api/todos")
+      console.log(response.data)
+      setTodos(response.data)
+    } catch (error) {
+      console.error("Failed to fetch todos:", error)
+    }
+  }
+  useEffect(() => {
+    fetchTodos()
+  }, [])
   return (
     <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -32,13 +55,10 @@ function App() {
             </div>
           </div>
 
-          {/* Form */}
-          <TodoForm />
 
-          {/* List */}
+          <TodoForm />
           <TodoList />
         </div>
-
       </div>
     </div>
   )

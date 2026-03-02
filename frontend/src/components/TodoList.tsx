@@ -1,12 +1,9 @@
-import TodoItem from './TodoItem'
+import React from 'react'
 
-function TodoList() {
+
+const TodoList = () => {
     return (
-        <div className="flex flex-col gap-2">
-            <TodoItem />
-            <TodoItem />
-            <TodoItem />
-        </div>
+        <div className='text-white'>TodoList</div>
     )
 }
 
