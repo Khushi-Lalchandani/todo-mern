@@ -1,7 +1,7 @@
 import './index.css'
 import TodoForm from './components/TodoForm'
 import TodoList from './components/TodoList'
-import { useState, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import API from './api.js'
 export interface Todo {
   _id: string
@@ -17,11 +17,32 @@ function App() {
   const fetchTodos = async () => {
     try {
       const response = await API.get("/api/todos")
-      console.log(response.data)
       setTodos(response.data)
     } catch (error) {
       console.error("Failed to fetch todos:", error)
     }
+  }
+  const sortedTodos = useMemo(() =>
+    todos.slice().sort((a, b) => Number(a.completed) - Number(b.completed)),
+    [todos])
+
+  const addTodo = async (title: string) => {
+    try {
+      const response = await API.post("/api/todos", { title })
+      setTodos((prev) => [response.data, ...prev])
+    } catch (error) {
+      console.error("Failed to add todo:", error)
+    }
+  }
+  const deleteTodo = async (id: string) => {
+    await API.delete(`/api/todos/${id}`)
+    setTodos((prev) => prev.filter((t) => t._id !== id))
+  }
+  const toggleTodo = async (id: string) => {
+    const todo = todos.find((t) => t._id === id)
+    if (!todo) return
+    const response = await API.put(`/api/todos/${id}`, { completed: !todo.completed })
+    setTodos((prev) => prev.map((t) => (t._id === id ? response.data : t)))
   }
   useEffect(() => {
     fetchTodos()
@@ -42,22 +63,22 @@ function App() {
           {/* Stats */}
           <div className="flex gap-4 mb-6">
             <div className="flex-1 bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-300">3</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-300">{todos.length}</p>
               <p className="text-blue-500/70 dark:text-blue-400/70 text-xs">Total</p>
             </div>
             <div className="flex-1 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold text-green-600 dark:text-green-300">1</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-300">{todos.filter(t => t.completed).length}</p>
               <p className="text-green-500/70 dark:text-green-400/70 text-xs">Completed</p>
             </div>
             <div className="flex-1 bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold text-orange-600 dark:text-orange-300">2</p>
+              <p className="text-2xl font-bold text-orange-600 dark:text-orange-300">{todos.filter(t => !t.completed).length}</p>
               <p className="text-orange-500/70 dark:text-orange-400/70 text-xs">Remaining</p>
             </div>
           </div>
 
 
-          <TodoForm />
-          <TodoList />
+          <TodoForm onAdd={addTodo} />
+          {sortedTodos && sortedTodos.length > 0 ? <TodoList todos={sortedTodos} deleteTodo={deleteTodo} toggleTodo={toggleTodo} /> : <p className='text-black dark:text-gray-400 text-center'>No todos yet!</p>}
         </div>
       </div>
     </div>
